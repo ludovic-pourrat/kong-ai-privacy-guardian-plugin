@@ -1,0 +1,95 @@
+_format_version: "3.0"
+
+vaults:
+  - description: AI Vault
+    name: env
+    prefix: ai
+    config:
+      prefix: VAULT_AI_
+
+services:
+  - name: anything
+    url: https://httpbin.org/anything
+    plugins:
+      - name: ai-privacy-guardian
+        enabled: true
+        config:
+          level: "public"
+    routes:
+      - name: anything
+        methods:
+          - POST
+        paths:
+          - /anything
+
+  - name: confidential-openai
+    url: https://api.openai.com
+    routes:
+      - name: confidential-openai
+        methods:
+          - POST
+        paths:
+          - "/confidential/openai-chat"
+        plugins:
+          - name: ai-proxy
+            enabled: true
+            config:
+              response_streaming: allow
+              route_type: "llm/v1/chat"
+              logging:
+                log_statistics: true
+                log_payloads: true
+              auth:
+                header_name: Authorization
+                header_value: "{vault://ai/OPENAI}"
+              model:
+                provider: openai
+                name: gpt-4o
+                options:
+                  max_tokens: 512
+                  temperature: 1.0
+          - name: ai-privacy-guardian
+            enabled: true
+            config:
+              level: "confidential"
+
+      - name: secret-openai
+        methods:
+          - POST
+        paths:
+          - "/secret/openai-chat"
+        plugins:
+          - name: ai-proxy
+            enabled: true
+            config:
+              response_streaming: allow
+              route_type: "llm/v1/chat"
+              logging:
+                log_statistics: true
+                log_payloads: true
+              auth:
+                header_name: Authorization
+                header_value: "{vault://ai/OPENAI}"
+              model:
+                provider: openai
+                name: gpt-4o
+                options:
+                  max_tokens: 512
+                  temperature: 1.0
+          - name: ai-privacy-guardian
+            enabled: true
+            config:
+              level: "secret"
+plugins:
+
+  - name: correlation-id
+    enabled: true
+    config:
+      header_name: Kong-Request-ID
+      generator: uuid
+      echo_downstream: false
+
+  - name: file-log
+    enabled: true
+    config:
+      path: /logs/proxy.log

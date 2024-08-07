@@ -1,0 +1,30 @@
+services:
+
+  kong:
+    build: .
+    env_file:
+      - .env
+    environment:
+      - KONG_DATABASE=off
+      - KONG_DECLARATIVE_CONFIG=/etc/kong/kong.yml
+      - KONG_PROXY_ACCESS_LOG=/dev/stdout
+      - KONG_ADMIN_ACCESS_LOG=/dev/stdout
+      - KONG_PROXY_ERROR_LOG=/dev/stderr
+      - KONG_ADMIN_ERROR_LOG=/dev/stderr
+      - KONG_STATUS_LISTEN=0.0.0.0:8006
+      - KONG_PROXY_LISTEN=0.0.0.0:8000
+      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+      - KONG_UI_LISTEN=0.0.0.0:8002
+      - KONG_PLUGINS=bundled,ai-privacy-guardian
+      - KONG_PLUGINSERVER_AI_PRIVACY_GUARDIAN_START_CMD=/usr/local/bin/ai-privacy-guardian.py -v
+      - KONG_PLUGINSERVER_AI_PRIVACY_GUARDIAN_QUERY_CMD=/usr/local/bin/ai-privacy-guardian.py -dump
+      - KONG_PLUGINSERVER_AI_PRIVACY_GUARDIAN_SOCKET=/usr/local/kong/ai-privacy-guardian.sock
+      - KONG_PLUGINSERVER_NAMES=ai-privacy-guardian
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+      - "8006:8006"
+    volumes:
+      - ${PWD}/kong.yml:/etc/kong/kong.yml
+      - ${PWD}/logs:/logs
