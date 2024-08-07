@@ -8,28 +8,45 @@ vaults:
       prefix: VAULT_AI_
 
 services:
-  - name: anything
-    url: https://httpbin.org/anything
-    plugins:
-      - name: ai-privacy-guardian
-        enabled: true
-        config:
-          level: "public"
-    routes:
-      - name: anything
-        methods:
-          - POST
-        paths:
-          - /anything
-
-  - name: confidential-openai
+  - name: ai-openai
     url: https://api.openai.com
+    plugins:
+      - name: rate-limiting
+        enabled: true
+        protocols:
+          - https
+        consumer: know-your-customer
+        config:
+          error_code: 429
+          error_message: API rate limit exceeded
+          fault_tolerant: true
+          hide_client_headers: false
+          hour: 32
+          limit_by: consumer
+          policy: local
+          sync_rate: -1
+      - name: rate-limiting
+        enabled: true
+        protocols:
+          - https
+        consumer: investments
+        config:
+          error_code: 429
+          error_message: API rate limit exceeded
+          fault_tolerant: true
+          hide_client_headers: false
+          hour: 2
+          limit_by: consumer
+          policy: local
+          sync_rate: -1
     routes:
-      - name: confidential-openai
+      - name: investments-openai
         methods:
           - POST
+        protocols:
+          - http
         paths:
-          - "/confidential/openai-chat"
+          - "/investments/openai-chat"
         plugins:
           - name: ai-proxy
             enabled: true
@@ -52,12 +69,26 @@ services:
             enabled: true
             config:
               level: "confidential"
+          - name: key-auth
+            enabled: true
+            protocols:
+              - https
+            config:
+              hide_credentials: true
+              key_in_body: false
+              key_in_header: true
+              key_in_query: false
+              key_names:
+                - X-API-Key
+              run_on_preflight: false
 
-      - name: secret-openai
+      - name: know-your-customer-openai
         methods:
           - POST
+        protocols:
+          - http
         paths:
-          - "/secret/openai-chat"
+          - "/know-your-customer/openai-chat"
         plugins:
           - name: ai-proxy
             enabled: true
@@ -72,7 +103,7 @@ services:
                 header_value: "{vault://ai/OPENAI}"
               model:
                 provider: openai
-                name: gpt-4o
+                name: gpt-4o-mini
                 options:
                   max_tokens: 512
                   temperature: 1.0
@@ -80,8 +111,20 @@ services:
             enabled: true
             config:
               level: "secret"
-plugins:
+          - name: key-auth
+            enabled: true
+            protocols:
+              - https
+            config:
+              hide_credentials: true
+              key_in_body: false
+              key_in_header: true
+              key_in_query: false
+              key_names:
+                - X-API-Key
+              run_on_preflight: false
 
+plugins:
   - name: correlation-id
     enabled: true
     config:
@@ -93,3 +136,17 @@ plugins:
     enabled: true
     config:
       path: /logs/proxy.log
+
+consumers:
+  - username: know-your-customer
+  - username: investments
+
+keyauth_credentials:
+  - consumer: know-your-customer
+    key: aab77da9-50a5-4b90-80fe-73e32ddf5240
+  - consumer: investments
+    key: 4255dae0-4b67-4b22-a9bf-396d894a516e
+
+
+
+

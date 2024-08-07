@@ -3,6 +3,7 @@
 import kong_pdk.pdk.kong as kong
 import spacy
 from spacy import Language
+from hashlib import sha256
 
 Schema = (
     {"level": {"type": "string", "default": "public", "one_of": ["public", "confidential", "secret"]}},
@@ -17,7 +18,7 @@ nlp: Language
 def redact(body, entities):
     redacted = ""
     for entity in entities:
-        redacted = body[0:entity.start_char] + entity.label_ + "[REDACTED]" + body[entity.end_char:]
+        redacted = body[0:entity.start_char] + entity.label_ + "[" + sha256(entity.text.encode('utf-8')).hexdigest() + "]" + body[entity.end_char:]
     return redacted
 
 
