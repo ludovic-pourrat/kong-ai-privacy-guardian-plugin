@@ -63,7 +63,7 @@ services:
                 provider: openai
                 name: gpt-4o
                 options:
-                  max_tokens: 512
+                  max_tokens: 1024
                   temperature: 1.0
           - name: ai-privacy-guardian
             enabled: true
@@ -105,7 +105,7 @@ services:
                 provider: openai
                 name: gpt-4o-mini
                 options:
-                  max_tokens: 512
+                  max_tokens: 1024
                   temperature: 1.0
           - name: ai-privacy-guardian
             enabled: true

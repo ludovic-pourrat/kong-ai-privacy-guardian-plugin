@@ -28,3 +28,11 @@ services:
     volumes:
       - ${PWD}/kong.yml:/etc/kong/kong.yml
       - ${PWD}/logs:/logs
+
+  newman:
+    build: ./tools/newman
+    command: newman run ai-privacy-guardian.json -n 2
+    depends_on:
+      - kong
+    volumes:
+      - ${PWD}/collections:/etc/newman

@@ -1,0 +1,45 @@
+{
+	"info": {
+		"_postman_id": "855e4df4-d71a-4ea8-92bf-862d61580b00",
+		"name": "AI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23210932"
+	},
+	"item": [
+		{
+			"name": "KYC",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-API-Key",
+						"value": "aab77da9-50a5-4b90-80fe-73e32ddf5240",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"messages\": [\n        {\n            \"role\": \"system\",\n            \"content\": \"You are a helpful private banker assistant\"\n        },\n        {\n            \"role\": \"user\",\n            \"content\": \"Could you provide me some investments proposal for someone who wants to invest in ESG against a 5% percent exposure to a 1 billion value portfolio ?\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://kong:8000/know-your-customer/openai-chat",
+					"protocol": "http",
+					"host": [
+						"kong"
+					],
+					"port": "8000",
+					"path": [
+						"know-your-customer",
+						"openai-chat"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
