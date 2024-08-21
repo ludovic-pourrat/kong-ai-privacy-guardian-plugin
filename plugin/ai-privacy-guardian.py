@@ -18,7 +18,8 @@ nlp: Language
 def redact(body, entities):
     redacted = ""
     for entity in entities:
-        redacted = body[0:entity.start_char] + entity.label_ + "[" + sha256(entity.text.encode('utf-8')).hexdigest() + "]" + body[entity.end_char:]
+        redacted = body[0:entity.start_char] + entity.label_ + "-[" + sha256(
+            entity.text.encode('utf-8')).hexdigest() + "]" + body[entity.end_char:]
     return redacted
 
 
@@ -78,6 +79,10 @@ class Plugin(object):
                         return worker.response.error(403, "Access Forbidden")
         except Exception as ex:
             worker.log.err("fail to compute data - %s" % ex)
+
+    def response(self, worker: kong.kong):
+
+        worker.log.info("response %s" % kong.service.response.response.get_raw_body())
 
 
 # add below section to allow this plugin optionally be running in a dedicated process

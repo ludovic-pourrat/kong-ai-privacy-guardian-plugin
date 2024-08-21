@@ -1,6 +1,8 @@
 services:
 
   kong:
+    networks:
+      - local
     build: .
     env_file:
       - .env
@@ -20,6 +22,8 @@ services:
       - KONG_PLUGINSERVER_AI_PRIVACY_GUARDIAN_QUERY_CMD=/usr/local/bin/ai-privacy-guardian.py -dump
       - KONG_PLUGINSERVER_AI_PRIVACY_GUARDIAN_SOCKET=/usr/local/kong/ai-privacy-guardian.sock
       - KONG_PLUGINSERVER_NAMES=ai-privacy-guardian
+      - KONG_TRACING_INSTRUMENTATIONS = all
+      - KONG_TRACING_SAMPLING_RATE = 1.0
     ports:
       - "8000:8000"
       - "8001:8001"
@@ -30,9 +34,14 @@ services:
       - ${PWD}/logs:/logs
 
   newman:
+    networks:
+      - local
     build: ./tools/newman
     command: newman run ai-privacy-guardian.json -n 2
     depends_on:
       - kong
     volumes:
       - ${PWD}/collections:/etc/newman
+
+networks:
+  local: {}

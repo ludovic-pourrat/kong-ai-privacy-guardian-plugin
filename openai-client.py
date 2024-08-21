@@ -7,6 +7,9 @@ client = OpenAI(
    default_headers={"X-API-Key": "4255dae0-4b67-4b22-a9bf-396d894a516e"}
 )
 
+query = """Could you provide me investments proposal for me who wants to invest in ESG against
+                    a 5% percent exposure to a 1 billion value portfolio ? """
+
 stream = client.chat.completions.create(
    model="gpt-4o-mini",
    messages=[
@@ -16,13 +19,14 @@ stream = client.chat.completions.create(
       },
       {
          "role": "user",
-         "content": "Could you provide me some investments proposal for Ludovic Pourrat who wants to invest in ESG against a 5% percent exposure to a 1 billion value portfolio ?"
+         "content": query
       }
    ],
    stream=True,
 )
 
-print('>')
+print('')
+
 for chunk in stream:
    print(chunk.choices[0].delta.content or "", end="", flush=True)
 
