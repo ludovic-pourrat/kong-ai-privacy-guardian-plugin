@@ -2,6 +2,9 @@
 
 import kong_pdk.pdk.kong as kong
 import spacy
+import io
+import gzip
+
 from spacy import Language
 from hashlib import sha256
 
@@ -10,17 +13,47 @@ Schema = (
 )
 
 version = '1.0.0'
-priority = 0
+priority = 768
 
 nlp: Language
+
+cache = {}
+
+def compress(data:str):
+    compressor = io.BytesIO()
+    
+    with gzip.GzipFile(fileobj=compressor, mode='wb') as worker:
+        worker.write(str.encode(data))
+    
+    return compressor.getvalue()
+
+
+def decompress(data:bytes):
+    decompressor = io.BytesIO(data)
+
+    with gzip.GzipFile(fileobj=decompressor, mode='rb') as worker:
+        buffer = worker.read()
+
+    return buffer.decode('utf-8')
+
+def encode(entity):
+    encoded = entity.label_ + "[" + sha256(entity.text.encode('utf-8')).hexdigest() + "]"
+    cache[encoded] = entity.text
+    return encoded
 
 
 def redact(body, entities):
     redacted = ""
     for entity in entities:
-        redacted = body[0:entity.start_char] + entity.label_ + "-[" + sha256(
-            entity.text.encode('utf-8')).hexdigest() + "]" + body[entity.end_char:]
+        redacted = body[0:entity.start_char] + encode(entity) + body[entity.end_char:]
     return redacted
+
+
+def extract(body):
+    for key in cache.keys():
+        body = body.replace(key, cache[key])
+
+    return body
 
 
 def sort_entities():
@@ -61,11 +94,11 @@ class Plugin(object):
 
     def access(self, worker: kong.kong):
 
-        worker.service.request.enable_buffering()
-        raw = worker.request.get_raw_body()[0]
-        body = raw.decode()
-
         try:
+            worker.service.request.enable_buffering()
+            raw = worker.request.get_raw_body()[0]
+            body = raw.decode()
+
             if self.config['level'] != "public":
                 entities = process_ner(body, nlp)
                 for entity in entities:
@@ -80,9 +113,20 @@ class Plugin(object):
         except Exception as ex:
             worker.log.err("fail to compute data - %s" % ex)
 
-    def response(self, worker: kong.kong):
 
-        worker.log.info("response %s" % kong.service.response.response.get_raw_body())
+    def response(self, worker: kong.kong):
+        try:
+
+            status = worker.response.get_status()[0]
+
+            if status == 200:
+                raw = worker.service.response.get_raw_body()[0]
+                worker.log.err("computed data", extract(decompress(raw))) 
+
+            cache.clear()
+
+        except Exception as ex:
+            worker.log.err("fail to compute data - %s" % ex)            
 
 
 # add below section to allow this plugin optionally be running in a dedicated process

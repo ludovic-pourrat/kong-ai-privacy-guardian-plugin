@@ -35,7 +35,7 @@ services:
           error_message: API rate limit exceeded
           fault_tolerant: true
           hide_client_headers: false
-          hour: 2
+          hour: 128
           limit_by: consumer
           policy: local
           sync_rate: -1
@@ -51,7 +51,7 @@ services:
           - name: ai-proxy
             enabled: true
             config:
-              response_streaming: allow
+              response_streaming: deny
               route_type: "llm/v1/chat"
               logging:
                 log_statistics: true
@@ -64,11 +64,17 @@ services:
                 name: gpt-4o
                 options:
                   max_tokens: 1024
-                  temperature: 1.0
+                  temperature: 0.5
           - name: ai-privacy-guardian
             enabled: true
             config:
               level: "confidential"
+          - name: ai-prompt-decorator
+            config:
+              prompts:
+                prepend:
+                - role: system
+                  content: Named entity may be tokenized in the user prompt following the format 'type[token]' where the type refers to an entity type and the token refers to a hashed value of the named entity value.
           - name: key-auth
             enabled: true
             protocols:
@@ -93,7 +99,7 @@ services:
           - name: ai-proxy
             enabled: true
             config:
-              response_streaming: allow
+              response_streaming: deny
               route_type: "llm/v1/chat"
               logging:
                 log_statistics: true
@@ -106,7 +112,7 @@ services:
                 name: gpt-4o-mini
                 options:
                   max_tokens: 1024
-                  temperature: 1.0
+                  temperature: 0.5
           - name: ai-privacy-guardian
             enabled: true
             config:
